@@ -143,4 +143,4 @@ python app.py
 ### Flask 설정
 
 - FLASK_ENV: Flask 실행 환경 (development/production)
-- FLASK_DEBUG: 디버그 모드 활성화 여부 (0/1)
+- FLASK_DEBUG: 디버그 모드 활성화 여부 (0/1) 
