@@ -1,12 +1,11 @@
 # Todo 애플리케이션
 
-PostgreSQL과 Redis를 사용하는 간단한 할 일 관리 애플리케이션입니다.
+PostgreSQL을 사용하는 간단한 할 일 관리 애플리케이션입니다.
 
 ## 기능
 
 - 할 일 추가
 - 할 일 완료/미완료 상태 변경
-- Redis를 이용한 캐싱
 - PostgreSQL을 이용한 영구 저장
 
 ## 아키텍처
@@ -14,7 +13,7 @@ PostgreSQL과 Redis를 사용하는 간단한 할 일 관리 애플리케이션�
 ### 시스템 구성도
 
 ```
-[Client] <-> [Flask Application] <-> [Redis Cache] <-> [PostgreSQL DB]
+[Client] <-> [Flask Application] <-> [PostgreSQL DB]
 ```
 
 ### 컴포넌트 설명
@@ -29,15 +28,9 @@ PostgreSQL과 Redis를 사용하는 간단한 할 일 관리 애플리케이션�
 
    - RESTful API 엔드포인트 제공
    - 비즈니스 로직 처리
-   - 데이터베이스 및 캐시 연동 관리
+   - 데이터베이스 연동 관리
 
-3. **Redis Cache**
-
-   - 할 일 목록 캐싱 (TTL: 1시간)
-   - 읽기 성능 최적화
-   - 메모리 기반 빠른 데이터 접근
-
-4. **PostgreSQL DB**
+3. **PostgreSQL DB**
    - 영구 데이터 저장
    - 관계형 데이터베이스
    - 데이터 정합성 보장
@@ -68,29 +61,20 @@ CREATE TABLE todos (
 1. **할 일 목록 조회 (GET /todos)**
 
    ```
-   Client -> Flask -> Redis Cache (있으면) -> Client
-   Client -> Flask -> PostgreSQL -> Redis Cache -> Client (없으면)
+   Client -> Flask -> Client
+   Client -> Flask -> PostgreSQL -> Client (없으면)
    ```
 
 2. **할 일 추가 (POST /todos)**
 
    ```
-   Client -> Flask -> PostgreSQL -> Redis Cache 삭제 -> Client
+   Client -> Flask -> PostgreSQL -> Client
    ```
 
 3. **할 일 상태 변경 (PUT /todos/<id>)**
    ```
-   Client -> Flask -> PostgreSQL -> Redis Cache 삭제 -> Client
+   Client -> Flask -> PostgreSQL -> Client
    ```
-
-### 캐시 전략
-
-1. **캐시 키**: 'todos' (전체 할 일 목록)
-2. **캐시 만료**: 1시간 (3600초)
-3. **캐시 무효화**: 데이터 변경 시 즉시 삭제
-4. **캐시 데이터 형식**: Python 리스트 (문자열로 직렬화)
-5. **캐시 폴백**: Redis 연결 실패 시 PostgreSQL에서 직접 조회
-6. **캐시 키 관리**: 환경별 접두사 사용 (예: 'dev:todos', 'prod:todos')
 
 ## 설치 방법
 
@@ -104,15 +88,13 @@ psql -U postgres
 \i sqls/01_init.sql
 ```
 
-2. Redis 설치 및 실행
-
-3. Python 패키지 설치:
+2. Python 패키지 설치:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-4. 환경 변수 설정:
+3. 환경 변수 설정:
    프로젝트 루트 디렉토리에 `.env` 파일을 생성하고 다음 내용을 설정합니다:
 
 ```env
@@ -122,13 +104,6 @@ POSTGRES_PASSWORD=postgres
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DB=todo_db
-
-# Redis 설정
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_DB=0
-REDIS_PASSWORD=
-REDIS_SSL=false
 
 # Flask 설정
 FLASK_ENV=development
@@ -145,7 +120,6 @@ python app.py
 
 - Backend: Flask
 - Database: PostgreSQL
-- Cache: Redis
 - Frontend: HTML, JavaScript, Bootstrap
 
 ## API 엔드포인트
@@ -165,14 +139,6 @@ python app.py
 - POSTGRES_HOST: PostgreSQL 호스트
 - POSTGRES_PORT: PostgreSQL 포트
 - POSTGRES_DB: PostgreSQL 데이터베이스 이름
-
-### Redis 설정
-
-- REDIS_HOST: Redis 호스트
-- REDIS_PORT: Redis 포트
-- REDIS_DB: Redis 데이터베이스 번호
-- REDIS_PASSWORD: Redis 비밀번호 (선택사항)
-- REDIS_SSL: Redis SSL 사용 여부 (true/false)
 
 ### Flask 설정
 
