@@ -110,17 +110,47 @@
       </button>
     </div>
 
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-primary active" data-filter="all">전체</button>
+        <button type="button" class="btn btn-outline-primary" data-filter="active">미완료</button>
+        <button type="button" class="btn btn-outline-primary" data-filter="completed">완료</button>
+      </div>
+      <div class="d-flex align-items-center">
+        <select class="form-select form-select-sm" id="perPageSelect" style="width: auto;">
+          <option value="10">10개씩</option>
+          <option value="20">20개씩</option>
+          <option value="50">50개씩</option>
+        </select>
+      </div>
+    </div>
+
     <div id="todoList"></div>
+
+    <div class="d-flex justify-content-center mt-4" id="pagination"></div>
   </div>
 
   <script>
+    let currentPage = 1;
+    let currentFilter = 'all';
+    let perPage = 10;
+
     async function fetchTodos() {
-      const res = await fetch('/todos');
-      const todos = await res.json();
+      const params = new URLSearchParams({
+        page: currentPage,
+        per_page: perPage
+      });
+      
+      if (currentFilter !== 'all') {
+        params.append('completed', currentFilter === 'completed');
+      }
+
+      const res = await fetch(`/todos?${params}`);
+      const data = await res.json();
       const todoList = document.getElementById('todoList');
       todoList.innerHTML = '';
 
-      if (!todos.length) {
+      if (!data.todos.length) {
         todoList.innerHTML = `
           <div class="empty-state">
             <i class="fas fa-inbox"></i>
@@ -130,7 +160,7 @@
         return;
       }
 
-      todos.forEach(todo => {
+      data.todos.forEach(todo => {
         const item = document.createElement('div');
         item.className = `todo-item ${todo.completed ? 'completed' : ''}`;
 
@@ -148,7 +178,88 @@
         `;
         todoList.appendChild(item);
       });
+
+      // 페이지네이션 UI 업데이트
+      updatePagination(data);
     }
+
+    function updatePagination(data) {
+      const pagination = document.getElementById('pagination');
+      pagination.innerHTML = '';
+
+      if (data.pages <= 1) return;
+
+      const ul = document.createElement('ul');
+      ul.className = 'pagination';
+
+      // 이전 페이지 버튼
+      const prevLi = document.createElement('li');
+      prevLi.className = `page-item ${!data.has_prev ? 'disabled' : ''}`;
+      prevLi.innerHTML = `
+        <button class="page-link" ${!data.has_prev ? 'disabled' : ''}>
+          <i class="fas fa-chevron-left"></i>
+        </button>
+      `;
+      if (data.has_prev) {
+        prevLi.querySelector('button').onclick = () => {
+          currentPage--;
+          fetchTodos();
+        };
+      }
+      ul.appendChild(prevLi);
+
+      // 페이지 번호
+      for (let i = 1; i <= data.pages; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === data.current_page ? 'active' : ''}`;
+        li.innerHTML = `
+          <button class="page-link">${i}</button>
+        `;
+        li.querySelector('button').onclick = () => {
+          currentPage = i;
+          fetchTodos();
+        };
+        ul.appendChild(li);
+      }
+
+      // 다음 페이지 버튼
+      const nextLi = document.createElement('li');
+      nextLi.className = `page-item ${!data.has_next ? 'disabled' : ''}`;
+      nextLi.innerHTML = `
+        <button class="page-link" ${!data.has_next ? 'disabled' : ''}>
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      `;
+      if (data.has_next) {
+        nextLi.querySelector('button').onclick = () => {
+          currentPage++;
+          fetchTodos();
+        };
+      }
+      ul.appendChild(nextLi);
+
+      pagination.appendChild(ul);
+    }
+
+    // 필터 버튼 이벤트 리스너
+    document.querySelectorAll('[data-filter]').forEach(button => {
+      button.addEventListener('click', (e) => {
+        document.querySelectorAll('[data-filter]').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        e.target.classList.add('active');
+        currentFilter = e.target.dataset.filter;
+        currentPage = 1;
+        fetchTodos();
+      });
+    });
+
+    // 페이지당 항목 수 변경 이벤트
+    document.getElementById('perPageSelect').addEventListener('change', (e) => {
+      perPage = parseInt(e.target.value);
+      currentPage = 1;
+      fetchTodos();
+    });
 
     document.getElementById('addButton').addEventListener('click', async (e) => {
       e.preventDefault();
@@ -162,6 +273,7 @@
           body: JSON.stringify({ title })
         });
         input.value = '';
+        currentPage = 1;
         fetchTodos();
       }
     });
