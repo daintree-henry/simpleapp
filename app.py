@@ -27,6 +27,8 @@ db_host = os.getenv("DB_HOST")
 db_port = os.getenv("DB_PORT", "5432")
 db_name = os.getenv("DB_NAME", "todo_db")
 
+ensure_database_and_initialize()
+
 if all([db_user, db_password, db_host, db_port, db_name]):
     db_uri = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
     app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
@@ -139,5 +141,4 @@ def update_todo(todo_id):
         return jsonify({'error': 'Internal Server Error'}), 500
 
 if __name__ == '__main__':
-    ensure_database_and_initialize()
     app.run(debug=os.getenv('FLASK_DEBUG', '0') == '1')
