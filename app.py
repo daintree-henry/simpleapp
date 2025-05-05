@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from db_initializer import ensure_database_and_initialize
 import os
 from datetime import datetime, timezone
 from dotenv import load_dotenv
@@ -138,4 +139,5 @@ def update_todo(todo_id):
         return jsonify({'error': 'Internal Server Error'}), 500
 
 if __name__ == '__main__':
+    ensure_database_and_initialize()
     app.run(debug=os.getenv('FLASK_DEBUG', '0') == '1')
