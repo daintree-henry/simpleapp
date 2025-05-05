@@ -43,6 +43,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 class Todo(db.Model):
+    __tablename__ = "todos"  # 👈 이 줄 추가
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     completed = db.Column(db.Boolean, default=False)
