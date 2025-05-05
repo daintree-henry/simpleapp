@@ -6,6 +6,13 @@ from dotenv import load_dotenv
 from urllib.parse import quote_plus
 import logging
 
+# 로깅 설정
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 # .env 로드
 load_dotenv()
 
@@ -17,24 +24,20 @@ conn_str = os.getenv("AZURE_POSTGRESQL_CONNECTIONSTRING")
 if conn_str:
     parts = dict(item.split("=", 1) for item in conn_str.split(";") if item)
     user = parts.get("User Id")
-    password = quote_plus(parts.get("Password"))  
+    password = quote_plus(parts.get("Password"))
     host = parts.get("Server")
     db = parts.get("Database")
     uri = f"postgresql://{user}:{password}@{host}:5432/{db}"
-    os.environ["SQLALCHEMY_DATABASE_URI"] = uri
+    app.config["SQLALCHEMY_DATABASE_URI"] = uri
+    logger.info("✅ SQLALCHEMY_DATABASE_URI 설정 완료 (Azure)")
+else:
+    logger.error("❌ AZURE_POSTGRESQL_CONNECTIONSTRING 누락됨")
+    raise RuntimeError("AZURE_POSTGRESQL_CONNECTIONSTRING is not set")
 
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["SQLALCHEMY_DATABASE_URI"]
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # DB 초기화
 db = SQLAlchemy(app)
-
-# 로깅 설정
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 # 모델 정의
 class Todo(db.Model):
