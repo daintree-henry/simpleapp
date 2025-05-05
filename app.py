@@ -1,10 +1,13 @@
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 from urllib.parse import quote_plus
 import logging
+
+# .env 로드
+load_dotenv()
 
 # 로깅 설정
 logging.basicConfig(
@@ -13,30 +16,26 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# .env 로드
-load_dotenv()
-
 # Flask 앱 설정
 app = Flask(__name__)
 
-# PostgreSQL 연결 문자열 파싱 (.env에 AZURE_POSTGRESQL_CONNECTIONSTRING 포함 필요)
-conn_str = os.getenv("AZURE_POSTGRESQL_CONNECTIONSTRING")
-if conn_str:
-    parts = dict(item.split("=", 1) for item in conn_str.split(";") if item)
-    user = parts.get("User Id")
-    password = quote_plus(parts.get("Password"))
-    host = parts.get("Server")
-    db = parts.get("Database")
-    uri = f"postgresql://{user}:{password}@{host}:5432/{db}"
-    app.config["SQLALCHEMY_DATABASE_URI"] = uri
-    logger.info("✅ SQLALCHEMY_DATABASE_URI 설정 완료 (Azure)")
+# 환경변수 기반 설정
+db_user = os.getenv("DB_USER")
+db_password = quote_plus(os.getenv("DB_PASSWORD", ""))
+db_host = os.getenv("DB_HOST")
+db_port = os.getenv("DB_PORT", "5432")
+db_name = os.getenv("DB_NAME", "todo_db")
+
+if all([db_user, db_password, db_host, db_port, db_name]):
+    db_uri = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
+    logger.info("✅ SQLALCHEMY_DATABASE_URI 설정 완료")
 else:
-    logger.error("❌ AZURE_POSTGRESQL_CONNECTIONSTRING 누락됨")
-    raise RuntimeError("AZURE_POSTGRESQL_CONNECTIONSTRING is not set")
+    logger.error("❌ 데이터베이스 환경변수가 일부 누락되었습니다.")
+    raise RuntimeError("DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME 환경변수를 모두 설정해주세요.")
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# DB 초기화
 db = SQLAlchemy(app)
 
 # 모델 정의
@@ -44,19 +43,21 @@ class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     completed = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):
         return {
             'id': self.id,
             'title': self.title,
             'completed': self.completed,
-            'created_at': self.created_at.isoformat()
+            'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
-# DB 테이블 생성
-with app.app_context():
-    db.create_all()
+# 개발 시에만 테이블 자동 생성
+if os.getenv('FLASK_DEBUG', '0') == '1':
+    with app.app_context():
+        db.create_all()
+        logger.info("✅ 개발 환경에서 DB 테이블 자동 생성됨")
 
 @app.route('/')
 def index():
@@ -103,6 +104,8 @@ def create_todo():
         logger.warning("Empty title submitted")
         return jsonify({'error': 'Title is required'}), 400
 
+    title = title[:100]  # DB 제한 보호
+
     try:
         new_todo = Todo(title=title)
         db.session.add(new_todo)
@@ -119,7 +122,12 @@ def update_todo(todo_id):
     data = request.get_json()
     completed = data.get('completed')
 
+    if not isinstance(completed, bool):
+        logger.warning(f"Invalid 'completed' value: {completed}")
+        return jsonify({'error': 'completed must be a boolean'}), 400
+
     logger.debug(f"Update request for id={todo_id}, completed={completed}")
+
     try:
         todo.completed = completed
         db.session.commit()
