@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 from datetime import datetime
 from dotenv import load_dotenv
+from urllib.parse import quote_plus
 
 # .env 파일 로드
 load_dotenv()
@@ -10,8 +11,20 @@ load_dotenv()
 app = Flask(__name__)
 
 # PostgreSQL 설정
-app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
+# Azure App Service 연결 문자열 파싱
+conn_str = os.getenv("AZURE_POSTGRESQL_CONNECTIONSTRING")
+
+if conn_str:
+    parts = dict(item.split("=", 1) for item in conn_str.split(";") if item)
+    user = parts.get("User Id")
+    password = quote_plus(parts.get("Password"))  
+    host = parts.get("Server")
+    db = parts.get("Database")
+
+    uri = f"postgresql://{user}:{password}@{host}:5432/{db}"
+    os.environ["SQLALCHEMY_DATABASE_URI"] = uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
 
 # Todo 모델 정의
