@@ -1,205 +1,167 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>할 일 관리</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Noto Sans KR', sans-serif;
-        }
-        .todo-container {
-            max-width: 800px;
-            margin: 2rem auto;
-        }
-        .todo-header {
-            background: linear-gradient(135deg, #6B73FF 0%, #000DFF 100%);
-            color: white;
-            padding: 2rem;
-            border-radius: 15px;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .todo-form {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            margin-bottom: 2rem;
-        }
-        .todo-item {
-            background: white;
-            border-radius: 10px;
-            margin-bottom: 1rem;
-            padding: 1rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-        .todo-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .todo-item.completed {
-            background-color: #f8f9fa;
-            opacity: 0.8;
-        }
-        .todo-item.completed .todo-title {
-            text-decoration: line-through;
-            color: #6c757d;
-        }
-        .todo-title {
-            font-size: 1.1rem;
-            margin-left: 0.5rem;
-            color: #212529;
-        }
-        .todo-date {
-            font-size: 0.85rem;
-            color: #6c757d;
-        }
-        .form-control {
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            border: 1px solid #dee2e6;
-        }
-        .form-control:focus {
-            box-shadow: 0 0 0 0.2rem rgba(107, 115, 255, 0.25);
-            border-color: #6B73FF;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #6B73FF 0%, #000DFF 100%);
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 500;
-        }
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #5A62FF 0%, #0009FF 100%);
-            transform: translateY(-1px);
-        }
-        .form-check-input:checked {
-            background-color: #6B73FF;
-            border-color: #6B73FF;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: #6c757d;
-        }
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: #dee2e6;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>할 일 관리</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #eef2f7;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+    .container {
+      max-width: 700px;
+      margin-top: 3rem;
+    }
+    .todo-header {
+      background: #1f3c88;
+      color: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+    .todo-header h1 {
+      font-weight: bold;
+    }
+    .todo-form {
+      margin-top: -2rem;
+      margin-bottom: 2rem;
+      background: white;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .todo-item {
+      background: white;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease-in-out;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    }
+    .todo-item.completed {
+      background-color: #f1f3f5;
+      opacity: 0.75;
+    }
+    .todo-title {
+      font-size: 1.1rem;
+      margin-left: 0.8rem;
+    }
+    .todo-title.completed {
+      text-decoration: line-through;
+      color: #6c757d;
+    }
+    .todo-date {
+      font-size: 0.85rem;
+      color: #adb5bd;
+    }
+    .form-control:focus {
+      border-color: #4e5ef7;
+      box-shadow: 0 0 0 0.2rem rgba(78, 94, 247, 0.25);
+    }
+    .btn-primary {
+      background: #4e5ef7;
+      border: none;
+    }
+    .btn-primary:hover {
+      background: #3e4de0;
+    }
+    .empty-state {
+      text-align: center;
+      color: #adb5bd;
+      margin-top: 3rem;
+    }
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+  </style>
 </head>
 <body>
-    <div class="container todo-container">
-        <div class="todo-header text-center">
-            <h1 class="mb-3"><i class="fas fa-tasks me-2"></i>할 일 관리</h1>
-            <p class="mb-0">오늘의 할 일을 관리하고 생산성을 높여보세요</p>
-        </div>
-        
-        <div class="todo-form">
-            <form id="todoForm" class="d-flex gap-2">
-                <input type="text" id="todoInput" class="form-control" placeholder="새로운 할 일을 입력하세요">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>추가
-                </button>
-            </form>
-        </div>
-
-        <div id="todoList">
-            <!-- 할 일 목록이 여기에 동적으로 추가됩니다 -->
-        </div>
+  <div class="container">
+    <div class="todo-header">
+      <h1><i class="fas fa-list-check me-2"></i>할 일 관리</h1>
+      <p class="mb-0">오늘 할 일을 정리하고 생산성을 높이세요!</p>
     </div>
 
-    <script>
-        // 할 일 목록 가져오기
-        async function fetchTodos() {
-            const response = await fetch('/todos');
-            const todos = await response.json();
-            const todoList = document.getElementById('todoList');
-            todoList.innerHTML = '';
-            
-            if (todos.length === 0) {
-                todoList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-clipboard-list"></i>
-                        <h3>할 일이 없습니다</h3>
-                        <p>새로운 할 일을 추가해보세요!</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            todos.forEach(todo => {
-                const todoItem = document.createElement('div');
-                todoItem.className = `todo-item ${todo.completed ? 'completed' : ''}`;
-                todoItem.innerHTML = `
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" ${todo.completed ? 'checked' : ''} 
-                                       onchange="updateTodo(${todo.id}, this.checked)">
-                            </div>
-                            <span class="todo-title">${todo.title}</span>
-                        </div>
-                        <span class="todo-date">
-                            <i class="far fa-clock me-1"></i>
-                            ${new Date(todo.created_at).toLocaleString()}
-                        </span>
-                    </div>
-                `;
-                todoList.appendChild(todoItem);
-            });
-        }
+    <div class="todo-form">
+      <form id="todoForm" class="d-flex gap-2">
+        <input type="text" id="todoInput" class="form-control" placeholder="할 일을 입력하세요" />
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-plus me-1"></i>추가
+        </button>
+      </form>
+    </div>
 
-        // 새로운 할 일 추가
-        document.getElementById('todoForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const input = document.getElementById('todoInput');
-            const title = input.value.trim();
-            
-            if (title) {
-                try {
-                    await fetch('/todos', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ title }),
-                    });
-                    
-                    input.value = '';
-                    fetchTodos();
-                } catch (error) {
-                    console.error('할 일 추가 중 오류 발생:', error);
-                }
-            }
+    <div id="todoList"></div>
+  </div>
+
+  <script>
+    async function fetchTodos() {
+      const res = await fetch('/todos');
+      const todos = await res.json();
+      const todoList = document.getElementById('todoList');
+      todoList.innerHTML = '';
+
+      if (!todos.length) {
+        todoList.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <p>할 일이 없습니다. 새로 추가해보세요!</p>
+          </div>
+        `;
+        return;
+      }
+
+      todos.forEach(todo => {
+        const item = document.createElement('div');
+        item.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+
+        item.innerHTML = `
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <input type="checkbox" class="form-check-input me-2" ${todo.completed ? 'checked' : ''}
+                onchange="updateTodo(${todo.id}, this.checked)">
+              <span class="todo-title ${todo.completed ? 'completed' : ''}">${todo.title}</span>
+            </div>
+            <span class="todo-date">
+              <i class="far fa-clock me-1"></i>${new Date(todo.created_at).toLocaleString()}
+            </span>
+          </div>
+        `;
+        todoList.appendChild(item);
+      });
+    }
+
+    document.getElementById('todoForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('todoInput');
+      const title = input.value.trim();
+
+      if (title) {
+        await fetch('/todos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title })
         });
-
-        // 할 일 상태 업데이트
-        async function updateTodo(id, completed) {
-            try {
-                await fetch(`/todos/${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ completed }),
-                });
-                
-                fetchTodos();
-            } catch (error) {
-                console.error('할 일 업데이트 중 오류 발생:', error);
-            }
-        }
-
-        // 초기 로딩
+        input.value = '';
         fetchTodos();
-    </script>
+      }
+    });
+
+    async function updateTodo(id, completed) {
+      await fetch(`/todos/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed })
+      });
+      fetchTodos();
+    }
+
+    fetchTodos();
+  </script>
 </body>
-</html> 
+</html>
