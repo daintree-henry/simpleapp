@@ -7,20 +7,20 @@ from dotenv import load_dotenv
 from urllib.parse import quote_plus
 import logging
 
-# .env 로드
+# Load environment variables from .env
 load_dotenv()
 
-# 로깅 설정
+# Logging configuration
 logging.basicConfig(
     level=logging.DEBUG,
     format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Flask 앱 설정
+# Initialize Flask app
 app = Flask(__name__)
 
-# 환경변수 기반 설정
+# Load configuration from environment variables
 db_user = os.getenv("DB_USER")
 db_password = quote_plus(os.getenv("DB_PASSWORD", ""))
 db_host = os.getenv("DB_HOST")
@@ -32,16 +32,16 @@ ensure_database_and_initialize()
 if all([db_user, db_password, db_host, db_port, db_name]):
     db_uri = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
     app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
-    logger.info("✅ SQLALCHEMY_DATABASE_URI 설정 완료")
+    logger.info("✅ SQLALCHEMY_DATABASE_URI configured")
 else:
-    logger.error("❌ 데이터베이스 환경변수가 일부 누락되었습니다.")
-    raise RuntimeError("DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME 환경변수를 모두 설정해주세요.")
+    logger.error("❌ Missing required DB environment variables")
+    raise RuntimeError("Please set DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME")
+
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# 모델 정의
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
@@ -55,12 +55,6 @@ class Todo(db.Model):
             'completed': self.completed,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
-
-# 개발 시에만 테이블 자동 생성
-if os.getenv('FLASK_DEBUG', '0') == '1':
-    with app.app_context():
-        db.create_all()
-        logger.info("✅ 개발 환경에서 DB 테이블 자동 생성됨")
 
 @app.route('/')
 def index():
@@ -107,7 +101,7 @@ def create_todo():
         logger.warning("Empty title submitted")
         return jsonify({'error': 'Title is required'}), 400
 
-    title = title[:100]  # DB 제한 보호
+    title = title[:100]  
 
     try:
         new_todo = Todo(title=title)
